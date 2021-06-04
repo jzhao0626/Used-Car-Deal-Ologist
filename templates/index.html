@@ -4,46 +4,14 @@
 <!-- D3 and Plotly -->
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<style>
-body, html {
-    height: 100%;
-}
 
-.hero-image {
-    /* Use "linear-gradient" to add a darken background effect to the image (photographer.jpg). This will make the text easier to read */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("https://www.chevrolet.com/content/dam/chevrolet/na/us/english/index/vehicle-groups/cars/01-images/2020-cars-segment-page-masthead.jpg?imwidth=960");
-    
-    /* Set a specific height */
-    height: 500px;
-    /* width: 75%;  */
-    
-
-    
-    /* Position and center the image to scale nicely on all screens */
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    position: relative;
-    }
-    
-    /* Place text in the middle of the image */
-    .hero-text {
-    /* text-align: center;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); */
-    color: white;
-    };
-
-#pad{
-    padding-left: 0px;
-    padding-right: 0px;
-}
-</style>
+<!-- Style sheet -->
+<link rel="stylesheet" href="/static/css/style.css">
 
 {% endblock %}
 {% block content %}
+<h1 id="warning-text" style ="color:red; font-weight:bold"></h1>
+<br>
 <div class="hero-image">
     <h1 style = "color:aliceblue; font-weight:bold">SEARCH FOR CAR</h1>
     <hr>
@@ -56,7 +24,7 @@ body, html {
         </div>
         <div class = "col-sm-3" >
             <div class="form-group">
-                <select class="form-control" id="type"></select>
+                <select class="form-control" id="car_type"></select>
               </div>
         </div>
         <div class = "col-sm-3" >
@@ -76,7 +44,7 @@ body, html {
     </div>
     <div class = "col-sm-3" >
         <div class="form-group">
-            <select class="form-control" id="fuel"></select>
+            <select class="form-control" id="fuel_type"></select>
           </div>
     </div>
     <div class = "col-sm-3" >
@@ -111,17 +79,17 @@ body, html {
   <div class ="col-sm-1"></div>
   <div class = "col-sm-3" >
       <div class="form-group">
-        <input class="form-control" id="year" type="text" placeholder="Year">
+        <input class="form-control" id="year" type="number" placeholder="Year">
         </div>
   </div>
   <div class = "col-sm-3" >
       <div class="form-group">
-        <input class="form-control" id="odometer" type="text" placeholder="Odometer">
+        <input class="form-control" id="odometer" type="number">
         </div>
   </div>
   <div class = "col-sm-3" >
     <div class="form-group">
-      <select class="form-control" id="cyl" type="text" placeholder="Cylinder"></select>
+      <select class="form-control" id="cyl" type="text"></select>
       </div>
 </div>
 </div>
@@ -138,7 +106,7 @@ body, html {
 {% endblock %}
 {% block bodyhtml %}
 <!-- Our JS -->
-<!-- <script type="text/javascript" src="/static/js/Example.js"></script> -->
-<script type="text/javascript" src="/static/js/Car.js"></script>
+<script type="text/javascript" src="/static/js/Vehicle.js"></script>
+<script type="text/javascript" src="/static/js/FormBuilder.js"></script>
 
 {% endblock %}

@@ -37,7 +37,6 @@ vehicle_size_map = {
     "full-size": 4,
 }
 
-
 # manufacturer = 'bmw','toyota','honda','chevrolet','mazda','ford','volvo','cadillac','saturn','subaru','dodge','gmc','ram','chrysler','mercedes-benz','infiniti','jeep','buick','nissan','volkswagen','mercury','hyundai','lexus','porsche','rover','audi','fiat','mini','mitsubishi','lincoln','jaguar','kia','pontiac','acura','tesla','alfa-romeo','datsun','harley-davidson','land rover','aston-martin','ferrari'
 # type = 'SUV','mini-van','convertible','coupe','truck','wagon','sedan','pickup','hatchback','van','other','bus','offroad'
 # paint_color = 'blue','white','grey','black','brown','red','silver','green','yellow','purple','custom','orange'
