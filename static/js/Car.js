@@ -43,7 +43,7 @@ var transmission = ["Transmission", "Automatic", "Other", "Manual"];
 var size = ["Vehicle Size", "Compact", "Sub-Compact", "Mid-Size", "Full-Size"];
 
 var state = ['State', 'al', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'dc', 'de', 'fl', 'ga', 'hi', 'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'nc', 'ne', 'nv', 'nj', 'nm', 'ny', 'nh', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
-var cylinders = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+var cylinders = ['Cylinder','3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
 
 refresh()
 
@@ -84,7 +84,9 @@ function onButtonClick() {
 		transmission: d3.select('#transmission').property("value"),
 		size: d3.select('#size').property("value"),
 		state: d3.select('#state').property("value"),
-		cyl: d3.select('#cyl').property("value"),
+		cyl: parseInt(d3.select('#cyl').property("value")),
+		year: parseInt(d3.select('#year').property("value")),
+		odometer: parseInt(d3.select('#odometer').property("value")),
 	}
 	console.log(formData);
 }
