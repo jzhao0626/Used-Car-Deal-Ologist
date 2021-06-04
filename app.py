@@ -4,6 +4,7 @@ import sqlite3
 from flask import Flask, render_template, redirect, current_app as app
 import json
 from mapping_values import vehicle_condition_map, vehicle_size_map
+from Load_SVR import submit_model
 
 error_text = "PLEASE FILL OUT ALL THE DATA"
 
@@ -85,8 +86,9 @@ def send_machine_learning_data(vehicle):
         "rwd": 1 * (cyl.index(vehicle["cyl"]) == 2 or cyl.index(vehicle["cyl"]) == 3),
     }
     print(machine_learning_data, flush=True)
-    print(machine_learning_data, flush=True)
-    print(machine_learning_data, flush=True)
+    # print(machine_learning_data, flush=True)
+    # print(machine_learning_data, flush=True)
+    submit_model(machine_learning_data)
 
 
 def convertFormToVehicle(formData):
