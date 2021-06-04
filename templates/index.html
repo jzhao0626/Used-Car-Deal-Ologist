@@ -52,35 +52,17 @@ body, html {
       <div class ="col-sm-1"></div>
         <div class = "col-sm-3" >
             <div class="form-group">
-                <select class="form-control" id="exampleFormControlSelect1">
-                  <option>Any Make</option>
-                  <option>2</option>
-                  <option>3</option>
-                  <option>4</option>
-                  <option>5</option>
-                </select>
+                <select class="form-control" id="manufacturer"></select>
               </div>
         </div>
         <div class = "col-sm-3" >
             <div class="form-group">
-                <select class="form-control" id="exampleFormControlSelect1">
-                  <option>Any Model</option>
-                  <option>2</option>
-                  <option>3</option>
-                  <option>4</option>
-                  <option>5</option>
-                </select>
+                <select class="form-control" id="type"></select>
               </div>
         </div>
         <div class = "col-sm-3" >
           <div class="form-group">
-              <select class="form-control" id="exampleFormControlSelect1">
-                <option>Any Model</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-              </select>
+              <select class="form-control" id="color"></select>
             </div>
       </div>
   </div>
@@ -90,35 +72,17 @@ body, html {
   <div class ="col-sm-1"></div>
     <div class = "col-sm-3" >
         <div class="form-group">
-            <select class="form-control" id="exampleFormControlSelect1">
-              <option>Any Make</option>
-              <option>2</option>
-              <option>3</option>
-              <option>4</option>
-              <option>5</option>
-            </select>
+            <select class="form-control" id="condition"></select>
           </div>
     </div>
     <div class = "col-sm-3" >
         <div class="form-group">
-            <select class="form-control" id="exampleFormControlSelect1">
-              <option>Any Model</option>
-              <option>2</option>
-              <option>3</option>
-              <option>4</option>
-              <option>5</option>
-            </select>
+            <select class="form-control" id="fuel"></select>
           </div>
     </div>
     <div class = "col-sm-3" >
       <div class="form-group">
-          <select class="form-control" id="exampleFormControlSelect1">
-            <option>Any Model</option>
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <option>5</option>
-          </select>
+          <select class="form-control" id="title"> </select>
         </div>
   </div>
 </div>
@@ -128,35 +92,35 @@ body, html {
   <div class ="col-sm-1"></div>
   <div class = "col-sm-3" >
       <div class="form-group">
-          <select class="form-control" id="exampleFormControlSelect1">
-            <option>Any Make</option>
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <option>5</option>
-          </select>
+          <select class="form-control" id="transmission"></select>
         </div>
   </div>
   <div class = "col-sm-3" >
       <div class="form-group">
-          <select class="form-control" id="exampleFormControlSelect1">
-            <option>Any Model</option>
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <option>5</option>
-          </select>
+          <select class="form-control" id="size"></select>
         </div>
   </div>
   <div class = "col-sm-3" >
     <div class="form-group">
-        <select class="form-control" id="exampleFormControlSelect1">
-          <option>Any Model</option>
-          <option>2</option>
-          <option>3</option>
-          <option>4</option>
-          <option>5</option>
-        </select>
+        <select class="form-control" id="state"></select>
+      </div>
+</div>
+</div>
+<div class = row>
+  <div class ="col-sm-1"></div>
+  <div class = "col-sm-3" >
+      <div class="form-group">
+        <input class="form-control" id="datetime" type="text" placeholder="Year">
+        </div>
+  </div>
+  <div class = "col-sm-3" >
+      <div class="form-group">
+        <input class="form-control" id="odometer" type="text" placeholder="Odometer">
+        </div>
+  </div>
+  <div class = "col-sm-3" >
+    <div class="form-group">
+      <select class="form-control" id="cyl" type="text" placeholder="Cylinder"></select>
       </div>
 </div>
 </div>
@@ -175,6 +139,7 @@ body, html {
 {% endblock %}
 {% block bodyhtml %}
 <!-- Our JS -->
-<script type="text/javascript" src="/static/js/Example.js"></script>
+<!-- <script type="text/javascript" src="/static/js/Example.js"></script> -->
+<script type="text/javascript" src="/static/js/Car.js"></script>
 
 {% endblock %}
