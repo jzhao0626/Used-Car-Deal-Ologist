@@ -100,6 +100,7 @@ def convertFormToVehicle(formData):
     for rawData in rawDataFields:
         var_name, var_value = rawData.split("=")
         if (globals()[var_name][0] == var_value):
+            print(f"Missing value for {var_name}: got {var_value}", flush=True)
             return None
         vehicle[var_name] = var_value
     return vehicle
@@ -135,6 +136,7 @@ def about():
 
 @app.route("/submit/<formData>")
 def submit(formData):
+    print(formData, flush=True)
     vehicle = convertFormToVehicle(formData)
     send_machine_learning_data(vehicle)
     return redirect("/", code=302)
