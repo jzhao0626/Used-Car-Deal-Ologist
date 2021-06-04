@@ -6,23 +6,47 @@ import json
 
 error_text = "PLEASE FILL OUT ALL THE DATA"
 
-color = ["Color", "blue", "white", "grey", "black", "brown", "red",
-         "silver", "green", "yellow", "purple", "custom", "orange"]
-condition = ["Condition", "New", "Like New",
-             "Excellent", "Good", "Fair", "Salvage"]
-cyl = ["Cylinder", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
-fuel_type = ["Fuel_Type", "Electric", "Gas", "Diesel", "Other"]
-manufacturer = ["Make", "bmw", "toyota", "honda", "chevrolet", "mazda", "ford", "volvo", "cadillac", "saturn", "subaru", "dodge", "gmc", "ram", "chrysler", "mercedes-benz", "infiniti", "jeep", "buick", "nissan", "volkswagen",
-                "mercury", "hyundai", "lexus", "porsche", "rover", "audi", "fiat", "mini", "mitsubishi", "lincoln", "jaguar", "kia", "pontiac", "acura", "tesla", "alfa-romeo", "datsun", "harley-davidson", "land rover", "aston-martin", "ferrari"]
+color = ["Color", "blue","white","grey","black","brown","red","silver","green","yellow","purple","custom","orange"]
+condition = ["Condition", 
+"new",
+"like new",
+"excellent",
+"good",
+"fair",
+"salvage",
+]
+cyl = ["Drive", "Front Wheel Drive", "Rear Wheel Drive", "Four Wheel Drive"]
+fuel_type = ["Fuel_Type", 
+"electric",
+"hybrid",
+"gas",
+"diesel",
+"other",
+]
+manufacturer = ["Make", "bmw","toyota","honda","chevrolet","mazda","ford","volvo","cadillac","saturn","subaru","dodge","gmc","ram","chrysler","mercedes-benz","infiniti","jeep","buick","nissan","volkswagen","mercury","hyundai","lexus","porsche","rover","audi","fiat","mini","mitsubishi","lincoln","jaguar","kia","pontiac","acura","tesla","alfa-romeo","datsun","harley-davidson","land rover","aston-martin","ferrari"]
 odometer = "Odometer"
-size = ["Vehicle_Size", "Compact", "Sub-Compact", "Mid-Size", "Full-Size"]
+size = ["Vehicle_Size", 
+"compact",
+"sub-compact",
+"mid-size",
+"full-size",
+]
 state = ["State", "al", "ak", "az", "ar", "ca", "co", "ct", "dc", "de", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn",
          "ms", "mo", "mt", "nc", "ne", "nv", "nj", "nm", "ny", "nh", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy"]
-title = ["Title_Status", "Clean", "Rebuilt",
-         "Lien", "Salvage", "Parts Only", "Missing"]
-transmission = ["Transmission", "Automatic", "Other", "Manual"]
-car_type = ["Type", "SUV", "mini-van", "convertible", "coupe", "truck",
-            "wagon", "sedan", "pickup", "hatchback", "van", "other", "bus", "offroad"]
+title = ["Title_Status",
+"clean",
+"rebuilt",
+"lien",
+"salvage",
+"parts only",
+"missing",
+]
+transmission = ["Transmission", 
+"automatic",
+"other",
+"manual",
+]
+car_type = ["Type", "SUV","mini-van","convertible","coupe","truck","wagon","sedan","pickup","hatchback","van","other","bus","offroad"]
 year = "Year"
 
 # Set up flask
