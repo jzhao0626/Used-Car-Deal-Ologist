@@ -143,6 +143,36 @@ def submit(formData):
     send_machine_learning_data(vehicle)
     return redirect("/", code=302)
 
+@app.route("/special_test")
+def special_test():
+    machine_learning_data = {
+        # "id",
+        # "region",
+        # "price",
+        "year": 2000,
+        # "manufacturer",
+        # "model",
+        "condition":  1,
+        # "cylinders",
+        # "fuel",
+        "odometer": 1000,
+        # "title_status",
+        "transmission": transmission[1],
+        "size": int(vehicle_size_map[size[1]]),
+        "type": car_type[1],
+        # "paint_color",
+        "state": "ga",
+        # "lat",
+        # "long",
+        # "posting_date",
+        "fwd": 1,
+        "rwd": 1,
+    }
+    print(machine_learning_data, flush=True)
+    # print(machine_learning_data, flush=True)
+    # print(machine_learning_data, flush=True)
+    submit_model(machine_learning_data)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
