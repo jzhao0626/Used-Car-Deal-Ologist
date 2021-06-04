@@ -1,0 +1,52 @@
+code,state,abbreviation,alpha_code
+1,Alabama,Ala.,AL
+2,Alaska,,AK
+4,Arizona,Ariz.,AZ
+5,Arkansas,Ark.,AR
+6,California,Calif.,CA
+8,Colorado,Colo.,CO
+9,Connecticut,Conn.,CT
+10,Delaware,Del.,DE
+11,District of Columbia,D.C.,DC
+12,Florida,Fla.,FL
+13,Georgia,Ga.,GA
+15,Hawaii,,HI
+16,Idaho,,ID
+17,Illinois,Ill.,IL
+18,Indiana,Ind.,IN
+19,Iowa,,IA
+20,Kansas,Kans.,KS
+21,Kentucky,Ky.,KY
+22,Louisiana,,LA
+23,Maine,Me.,ME
+24,Maryland,Md.,MD
+25,Massachusetts,Mass.,MA
+26,Michigan,Mich.,MI
+27,Minnesota,Minn.,MN
+28,Mississippi,Miss.,MS
+29,Missouri,Mo.,MO
+30,Montana,Mont.,MT
+31,Nebraska,Nebr.,NE
+32,Nevada,Nev.,NV
+33,New Hampshire,N.H.,NH
+34,New Jersey,N.J.,NJ
+35,New Mexico,N.Mex.,NM
+36,New York,N.Y.,NY
+37,North Carolina,N.C.,NC
+38,North Dakota,,ND
+39,Ohio,,OH
+40,Oklahoma,Okla.,OK
+41,Oregon,Ore.,OR
+42,Pennsylvania,Penn.,PA
+44,Rhode Island,R.I.,RI
+45,South Carolina,S.C.,SC
+46,South Dakota,,SD
+47,Tennessee,Tenn.,TN
+48,Texas,Tex.,TX
+49,Utah,,UT
+50,Vermont,Vt.,VT
+51,Virginia,Va.,VA
+53,Washington,Wash.,WA
+54,West Virginia,W.Va.,WV
+55,Wisconsin,Wis.,WI
+56,Wyoming,Wyo.,WY
