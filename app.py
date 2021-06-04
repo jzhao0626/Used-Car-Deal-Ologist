@@ -3,7 +3,7 @@ import traceback
 import sqlite3
 from flask import Flask, render_template, redirect, current_app as app
 import json
-from mapping_values import vehicle_condition_map,vehicle_size_map
+from mapping_values import vehicle_condition_map, vehicle_size_map
 
 error_text = "PLEASE FILL OUT ALL THE DATA"
 
@@ -57,7 +57,7 @@ year = "Year"
 app = Flask(__name__)
 
 
-def onGetVehicle(vehicle):
+def send_machine_learning_data(vehicle):
     if (vehicle == None):
         print("No data!", flush=True)
         return
@@ -88,8 +88,22 @@ def onGetVehicle(vehicle):
     print(machine_learning_data, flush=True)
     print(machine_learning_data, flush=True)
 
+
 def convertFormToVehicle(formData):
-    globals()['a']
+    formData = formData.replace("%20", " ")
+    rawDataFields = formData.split("&")
+    vehicle = {}
+    if ("year=" + year in rawDataFields):
+        return None
+    if ("odometer=" + odometer in rawDataFields):
+        return None
+    for rawData in rawDataFields:
+        var_name, var_value = rawData.split("=")
+        if (globals()[var_name][0] == var_value):
+            return None
+        vehicle[var_name] = var_value
+    return vehicle
+
 
 @app.route('/postmethod', methods=['POST'])
 def post_javascript_data():
@@ -121,7 +135,8 @@ def about():
 
 @app.route("/submit/<formData>")
 def submit(formData):
-    print(formData)
+    vehicle = convertFormToVehicle(formData)
+    send_machine_learning_data(vehicle)
     return redirect("/", code=302)
 
 
