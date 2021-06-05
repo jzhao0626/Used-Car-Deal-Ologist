@@ -275,9 +275,14 @@ def post_javascript_data():
 
 
 @app.route("/")
-@app.route("/<moeny>")
-def index(moeny=None):
-    return render_template("index.html")
+@app.route("/<money>")
+def index(money=None):
+    try:
+        cash = float(money)
+        money = f"${cash}" 
+    except:
+        money = ""
+    return render_template("index.html", money=money)
 
 
 @app.route("/about")
@@ -292,7 +297,7 @@ def submit(formData):
     return send_machine_learning_data(vehicle)
 
 
-@app.route("/test")
+@app.route("/t/test")
 def test():
     machine_learning_data = {
         "color": "grey",
@@ -309,7 +314,6 @@ def test():
         "year": "1",
     }
     return send_machine_learning_data(machine_learning_data)
-
 
 
 if __name__ == "__main__":
