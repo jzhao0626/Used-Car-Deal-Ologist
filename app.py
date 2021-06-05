@@ -212,9 +212,6 @@ def send_machine_learning_data(vehicle):
     }
 
     print(machine_learning_data, flush=True)
-    print(machine_learning_data, flush=True)
-    print(machine_learning_data, flush=True)
-    print(machine_learning_data, flush=True)
 
     result = submit_model(
         machine_learning_data,
@@ -273,12 +270,15 @@ def post_javascript_data():
 @app.route("/")
 @app.route("/<money>")
 def index(money=None):
+    display_color = "green"
     try:
         cash = float(money)
-        money = f"${cash}"
+        if (cash < 0):
+            display_color = "red"
+        money = "${:,}".format(cash)
     except:
         money = ""
-    return render_template("index.html", money=money)
+    return render_template("index.html", money=money, color=display_color)
 
 
 @app.route("/about")
