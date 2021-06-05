@@ -85,10 +85,17 @@ def send_machine_learning_data(vehicle):
         "fwd": 1 * (cyl.index(vehicle["cyl"]) == 1 or cyl.index(vehicle["cyl"]) == 3),
         "rwd": 1 * (cyl.index(vehicle["cyl"]) == 2 or cyl.index(vehicle["cyl"]) == 3),
     }
+
     print(machine_learning_data, flush=True)
-    # print(machine_learning_data, flush=True)
-    # print(machine_learning_data, flush=True)
-    submit_model(machine_learning_data)
+    print(machine_learning_data, flush=True)
+    print(machine_learning_data, flush=True)
+    print(machine_learning_data, flush=True)
+    
+    submit_model(
+        machine_learning_data,
+        ['year', 'condition', 'odometer', 'transmission', 'size', 'type', 'state', 'fwd', 'rwd'],
+        "Used_Car_Price_Pipeline_SVR.pkl",
+    )
 
 
 def convertFormToVehicle(formData):
