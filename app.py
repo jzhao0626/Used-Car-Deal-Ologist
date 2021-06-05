@@ -1,8 +1,4 @@
-import os
-import traceback
-import sqlite3
 from flask import Flask, render_template, redirect, current_app as app
-import json
 from mapping_values import vehicle_condition_map, vehicle_size_map
 from Load_SVR import submit_model
 
