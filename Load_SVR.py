@@ -10,21 +10,24 @@ import joblib
 
 
 def submit_model(vehicle_as_dict, sorted_columns, pipeline_file):
-    # set the first value as a list
-    for key in vehicle_as_dict:
-        vehicle_as_dict[key] = [vehicle_as_dict[key]]
-        break
-    # create the the dataframe
-    testing_vehicle = pd.DataFrame.from_dict(vehicle_as_dict, orient='columns')
-    # sorting columns into order
-    testing_vehicle = testing_vehicle[sorted_columns]
-    # load the model from disk
-    testing_pipeline = joblib.load(pipeline_file)
-    vehicle_testing_results = testing_pipeline.predict(testing_vehicle)
-    testing_result = round(vehicle_testing_results[0], 2)
-    print("testing_result: ", testing_result, flush=True)
-    return testing_result
-
+    try:
+        # set the first value as a list
+        for key in vehicle_as_dict:
+            vehicle_as_dict[key] = [vehicle_as_dict[key]]
+            break
+        # create the the dataframe
+        testing_vehicle = pd.DataFrame.from_dict(vehicle_as_dict, orient='columns')
+        # sorting columns into order
+        testing_vehicle = testing_vehicle[sorted_columns]
+        # load the model from disk
+        testing_pipeline = joblib.load(pipeline_file)
+        vehicle_testing_results = testing_pipeline.predict(testing_vehicle)
+        testing_result = round(vehicle_testing_results[0], 2)
+        print("testing_result: ", testing_result, flush=True)
+        return testing_result
+    except Exception as e:
+        print("ERROR", vehicle_as_dict, e, flush=True)
+        return "error"
 
 if __name__ == "__main__":
     submit_model(
