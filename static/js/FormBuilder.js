@@ -58,5 +58,7 @@ function onButtonClick() {
 	for (const [key, value] of Object.entries(formData))
 		url.push(`${key}=${value}`);
 
-	window.location.replace(window.location.href + "submit/"+url.join("&"));
+	var baseWindowPath = window.location.href;
+	baseWindowPath = baseWindowPath.substring(0, baseWindowPath.lastIndexOf("/") + 1);
+	window.location.replace(baseWindowPath + "submit/"+url.join("&"));
 }
