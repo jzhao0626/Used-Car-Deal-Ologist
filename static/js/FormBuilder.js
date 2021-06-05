@@ -60,5 +60,5 @@ function onButtonClick() {
 
 	var baseWindowPath = window.location.href;
 	baseWindowPath = baseWindowPath.substring(0, baseWindowPath.lastIndexOf("/") + 1);
-	window.location.replace(baseWindowPath + "submit/"+url.join("&"));
+	window.location.replace(baseWindowPath + "submit/" + url.join("&"));
 }

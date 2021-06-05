@@ -10,7 +10,7 @@
 
 {% endblock %}
 {% block content %}
-<h1 id="warning-text" style ="color:green; font-weight:bold">{{money}}</h1>
+<h1 id="warning-text" style ="color:{{color}}; font-weight:bold">{{money}}</h1>
 <br>
 <div class="hero-image">
     <h1 style = "color:aliceblue; font-weight:bold">SEARCH FOR CAR</h1>
@@ -106,7 +106,6 @@
 {% endblock %}
 {% block bodyhtml %}
 <!-- Our JS -->
-<script type="text/javascript" src="/static/js/Vehicle.js"></script>
 <script type="text/javascript" src="/static/js/FormBuilder.js"></script>
 
 {% endblock %}
