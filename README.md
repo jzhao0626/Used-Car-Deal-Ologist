@@ -5,6 +5,7 @@
 All the members of the team contributed equally in every section of the project.
 
 Check out our live website at https://used-car-deal-ologist-2021.herokuapp.com/
+![Live Website Screenshot](images/Main_page_web.png)
 
 # Instructions
 
@@ -61,12 +62,6 @@ The Main page shows the fields to input car data for checking against the traine
 
 ![Webpage Input Car](pre-planning/webpage_input_car.png)
 ![Webpage Show Car](pre-planning/webpage_show_car.png)
-
-# Flask Structure and Final Product Developed
-
-Dashboard showing all the input fields with the result data on the top the the screen.
-
-![MainPage](images/Main_page_web.png)
 
 ## References
 
