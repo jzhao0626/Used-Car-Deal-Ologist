@@ -4,6 +4,8 @@
 [Jinhan(Walt) Zhao](https://github.com/jzhao0626), [Franklyn De La Cruz](https://github.com/delacruzfranklyn93), [Tristan Nguyen](https://github.com/tristan1994), and [Sebastian Echeverry](https://github.com/uno-sebastian).
 All the members of the team contributed equally in every section of the project.
 
+Check out our live website at https://used-car-deal-ologist-2021.herokuapp.com/
+
 # Instructions
 
 Make sure to run the flask app by changing directory into the main project folder and running:
@@ -15,6 +17,17 @@ python app.py
 The final product is to take the car information dataset to predict and display the range of values that the car can be sold at. We will have an online front-end to connect to our machine learning model where a user can input the information for a car and display a price range for that car. The machine learning model will ingest data from a particular car’s information and output a monetary value. We can then process insights from data generated from the machine learning model.
 
 The team collectively reviewed the dataset and cleaned the data by removing outliers, dummy, and dishonest data. The dataset chosen (below) included 15 individual files and a total of 21 columns with 374,278 rows of information. Our challenge was to predict the price of the car with the the chosen features. All aspects of this project were approached as a team.
+
+This is the final Tableau analysis for our dataset.
+
+https://public.tableau.com/app/profile/franklyn1409/viz/Used-Car-2/UsedCarAnalysis
+
+## Visualizations:
+
+![Type_Dist](images/Type_Dist.png)
+![Price_V_Features](images/Price_V_Features.png)
+![Mileage_V_Price](images/Mileage_V_Price.png)
+![State_Price](images/State_Price.png)
 
 ## Extract:
 
@@ -51,11 +64,9 @@ The Main page shows the fields to input car data for checking against the traine
 
 # Flask Structure and Final Product Developed
 
-![MainPage](images/Main_page_web.png)
-Dashboard showing all the input fields.
+Dashboard showing all the input fields with the result data on the top the the screen.
 
-![WebpageShowCar](images/Main_page_show.png)
-Dashboard showing all the input fields.
+![MainPage](images/Main_page_web.png)
 
 ## References
 
