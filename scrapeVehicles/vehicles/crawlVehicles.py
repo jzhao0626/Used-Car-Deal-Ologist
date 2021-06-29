@@ -10,9 +10,10 @@ from requests_html import HTMLSession
 from .Vehicle import Vehicle
 
 
-def apply_attributes(vehicle, attributes):
+def apply_webpage_attributes(vehicle, attributes):
     # this fetches a list of attributes about a given vehicle. each vehicle does not have every specific attribute listed on craigslist
     # so this code gets a little messy as we need to handle errors if a car does not have the attribute we're looking for
+    raw_attributes = {}
     for attribute in attributes:
         try:
             # model is the only attribute without a specific tag on craigslist, so if this code fails it means that we've grabbed the model of the vehicle
@@ -21,15 +22,24 @@ def apply_attributes(vehicle, attributes):
         except:
             tag = "model"
         try:
-            if tag and tag == "type":
+            # # some of these tags are not 100% the same with the vehicle class, have to change them to match
+            if tag == "type":
                 tag = "car_type"
+            if " " in tag:
+                tag = tag.replace(" ", "_")
             # this code fails if attribute=None so we have to handle it appropriately
-            setattr(vehicle, tag, attribute.text.strip())
+            raw_attributes[tag] = attribute.text.strip()
         except:
+            raw_attributes[tag] = None
             pass
 
-    return vehicle
+    for key, value in raw_attributes.items():
+        if (key not in Vehicle.__dict__):
+            print(f"could not attach key to class: {key}", flush=True)
+        else:
+            setattr(vehicle, key, value)
 
+    return vehicle
 
 def fix_manufacturer_errors(manufacturer):
     if manufacturer:
@@ -154,7 +164,7 @@ def scrapeVehicles(cities):
 
             # now we scrape
             try:
-                searchUrl = f"{city[2]}/d/cars-trucks/search/cta?s={scrapedInCity}"
+                searchUrl = f"{city.url}/d/cars-trucks/search/cta?s={scrapedInCity}"
                 page = session.get(searchUrl)
             except Exception as e:
                 # catch any excpetion and continue the loop if we cannot access a site for whatever reason
@@ -203,12 +213,10 @@ def scrapeVehicles(cities):
                 scrapedIds.add(idpk)
 
                 new_vehicle = Vehicle(idpk)
+                new_vehicle.price = int(item[1].replace(",", "").strip("$"))
 
                 vehicleDict = {}
-
-                price = int(item[1].replace(",", "").strip("$"))
-                vehicleDict["price"] = price
-                new_vehicle.price = price
+                vehicleDict["price"] = int(item[1].replace(",", "").strip("$"))
 
                 try:
                     # grab each individual vehicle page
@@ -218,25 +226,8 @@ def scrapeVehicles(cities):
                     print(f"Failed to reach {url}, entry has been dropped")
                     continue
 
-                attrs = tree.xpath("//span//b")
-                new_vehicle = apply_attributes(new_vehicle, attrs)
 
-                # this fetches a list of attributes about a given vehicle. each vehicle does not have every specific attribute listed on craigslist
-                # so this code gets a little messy as we need to handle errors if a car does not have the attribute we're looking for
-                for item in attrs:
-                    try:
-                        # model is the only attribute without a specific tag on craigslist, so if this code fails it means that we've grabbed the model of the vehicle
-                        k = item.getparent().text.strip()
-                        k = k.strip(":")
-                        print(f"k = k.strip(':')   {k}", flush=True)
-                    except:
-                        k = "model"
-                    try:
-                        # this code fails if item=None so we have to handle it appropriately
-                        vehicleDict[k] = item.text.strip()
-                        print(f"vehicleDict[k] = item.text.strip()   {k}", flush=True)
-                    except:
-                        continue
+                new_vehicle = apply_webpage_attributes(new_vehicle, tree.xpath("//span//b"))
 
                 # we will assume that each of these variables are None until we hear otherwise
                 # that way, try/except clauses can simply pass and leave these values as None
@@ -361,8 +352,8 @@ def scrapeVehicles(cities):
                     (
                         idpk,
                         url,
-                        city[2],
-                        city[1],
+                        city.url,
+                        city.state,
                         price,
                         year,
                         manufacturer,
@@ -382,12 +373,13 @@ def scrapeVehicles(cities):
                         description,
                         lat,
                         long,
-                        city[0],
+                        city.name,
                         posting_date,
                     ),
                 )
 
-                if len(scraped_vehicles) > 99:
+                scraped += 1
+                if scraped > 99:
                     return scraped_vehicles
             # these lines will execute every time we grab a new page (after 120 entries)
-            print(f"{len(scraped_vehicles)} vehicles scraped", flush=True)
+            print(f"{scraped} vehicles scraped", flush=True)

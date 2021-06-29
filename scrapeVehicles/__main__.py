@@ -8,7 +8,8 @@ def main():
     # create requests session
     session = HTMLSession()
     cities = getCities(session)
-    print(cities)
+    for city in cities:
+        print(city)
     print("inside module", flush=True)
     vehicles = getVehicles(cities)
     print("done", flush=True)
