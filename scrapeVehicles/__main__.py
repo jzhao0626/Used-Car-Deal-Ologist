@@ -3,14 +3,16 @@ from vehicles.crawlVehicles import scrapeVehicles as getVehicles
 from lxml import html
 from requests_html import HTMLSession
 
+
 def main():
-    #create requests session
+    # create requests session
     session = HTMLSession()
     cities = getCities(session)
     print(cities)
     print("inside module", flush=True)
     vehicles = getVehicles(cities)
     print("done", flush=True)
+
 
 if __name__ == "__main__":
     main()
