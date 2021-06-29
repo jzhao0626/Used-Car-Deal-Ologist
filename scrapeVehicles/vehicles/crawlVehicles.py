@@ -9,6 +9,7 @@ from datetime import datetime
 from requests_html import HTMLSession
 from .carBrands import carBrands
 from .Vehicle import Vehicle
+from .rawVehicleParser import process_raw_vehicle_data
 
 # each city contains max 3_000 entries
 craigslist_page_limit = 25
@@ -45,146 +46,6 @@ def scrape_raw_vehicles(session, page_url):
         raw_vehicles.append(vehicleDetails)
 
     return raw_vehicles
-    
-
-def process_raw_vehicle(session, raw_vehicle):
-    url = raw_vehicle[0]
-
-    try:
-        idpk = int(url.split("/")[-1].strip(".html"))
-    except ValueError as e:
-        print("{} does not have a valid id: {}".format(url, e), flush=True)
-        return None
-
-    new_vehicle = Vehicle(idpk)
-    new_vehicle.price = int(raw_vehicle[1].replace(",", "").strip("$"))
-
-    vehicleDict = {}
-    vehicleDict["price"] = int(raw_vehicle[1].replace(",", "").strip("$"))
-
-    try:
-        # grab each individual vehicle page
-        page = session.get(url)
-        tree = html.fromstring(page.content)
-    except:
-        print(f"Failed to reach {url}, entry has been dropped")
-        return None
-
-    new_vehicle = apply_webpage_attributes(new_vehicle, tree.xpath("//span//b"))
-
-    # we will assume that each of these variables are None until we hear otherwise
-    # that way, try/except clauses can simply pass and leave these values as None
-    price = None
-    year = None
-    manufacturer = None
-    model = None
-    condition = None
-    cylinders = None
-    fuel = None
-    odometer = None
-    title_status = None
-    transmission = None
-    VIN = None
-    drive = None
-    size = None
-    vehicle_type = None
-    paint_color = None
-    image_url = None
-    lat = None
-    long = None
-    description = None
-    posting_date = None
-
-    # now this code gets redundant. if we picked up a specific attr in the vehicleDict then we can change the variable from None.
-    # integer attributes (price/odometer) are handled in case the int() is unsuccessful, but i have never seen that be the case
-    if "price" in vehicleDict:
-        try:
-            price = int(vehicleDict["price"])
-        except Exception as e:
-            print(f"Could not parse price: {e}")
-    if "odomoter" in vehicleDict:
-        try:
-            odometer = int(vehicleDict["odometer"])
-        except Exception as e:
-            print(f"Could not parse odometer: {e}")
-    if "condition" in vehicleDict:
-        condition = vehicleDict["condition"]
-    if "model" in vehicleDict:
-        # model actually contains 3 variables that we'd like: year, manufacturer, and model (which we call model)
-        try:
-            year = int(vehicleDict["model"][:4])
-            if year > nextYear:
-                year = None
-        except:
-            year = None
-        model = vehicleDict["model"][5:]
-        foundManufacturer = False
-        # we parse through each word in the description and search for a match with carBrands (at the top of the program)
-        # if a match is found then we have our manufacturer, otherwise we set model to the entire string and leave manu blank
-        for word in model.split():
-            if word.lower() in carBrands:
-                foundManufacturer = True
-                model = ""
-                # resolve conflicting manufacturer titles
-                manufacturer = fix_manufacturer_errors(manufacturer)
-                continue
-            if foundManufacturer:
-                model = model + word.lower() + " "
-        model = model.strip()
-    if "cylinders" in vehicleDict:
-        cylinders = vehicleDict["cylinders"]
-    if "fuel" in vehicleDict:
-        fuel = vehicleDict["fuel"]
-    if "odometer" in vehicleDict:
-        odometer = vehicleDict["odometer"]
-    if "title status" in vehicleDict:
-        title_status = vehicleDict["title status"]
-    if "transmission" in vehicleDict:
-        transmission = vehicleDict["transmission"]
-    if "VIN" in vehicleDict:
-        VIN = vehicleDict["VIN"]
-    if "drive" in vehicleDict:
-        drive = vehicleDict["drive"]
-    if "size" in vehicleDict:
-        size = vehicleDict["size"]
-    if "type" in vehicleDict:
-        vehicle_type = vehicleDict["type"]
-    if "paint color" in vehicleDict:
-        paint_color = vehicleDict["paint color"]
-
-    # now lets fetch the image url if exists
-
-    try:
-        img = tree.xpath('//div[@class="slide first visible"]//img')
-        image_url = img[0].attrib["src"]
-    except:
-        pass
-
-    # try to fetch lat/long and city/state, remain as None if they do not exist
-
-    try:
-        location = tree.xpath("//div[@id='map']")
-        lat = float(location[0].attrib["data-latitude"])
-        long = float(location[0].attrib["data-longitude"])
-    except Exception as e:
-        pass
-
-    # try to fetch a vehicle description, remain as None if it does not exist
-
-    try:
-        location = tree.xpath("//section[@id='postingbody']")
-        # description = location[0].text_content().replace("\n", " ").replace("QR Code Link to This Post", "").strip()
-        description = None
-    except:
-        pass
-    try:
-        posting_date = tree.xpath(
-            "//div[@class='postinginfos']//p[@class='postinginfo reveal']//time"
-        )[0].get("datetime")
-    except Exception as e:
-        print(e)
-
-    return new_vehicle
 
 
 def scrape_city_pages(session, city):
@@ -196,71 +57,18 @@ def scrape_city_pages(session, city):
         vehiclesList = scrape_raw_vehicles(session, page_url)
 
         for raw_vehicle in vehiclesList:
-            new_vehicle = process_raw_vehicle(session, raw_vehicle)
+            new_vehicle = process_raw_vehicle_data(session, raw_vehicle)
             
             if (new_vehicle != None):
                 scraped_vehicles.append(new_vehicle)
         
             if len(scraped_vehicles) > 99:
                 return scraped_vehicles
-                
+
         # these lines will execute every time we grab a new page (after 120 entries)
         print(f"{len(scraped_vehicles)} vehicles scraped", flush=True)
     
     return scraped_vehicles
-
-def apply_webpage_attributes(vehicle, attributes):
-    # this fetches a list of attributes about a given vehicle. each vehicle does not have every specific attribute listed on craigslist
-    # so this code gets a little messy as we need to handle errors if a car does not have the attribute we're looking for
-    raw_attributes = {}
-    for attribute in attributes:
-        try:
-            # model is the only attribute without a specific tag on craigslist, so if this code fails it means that we've grabbed the model of the vehicle
-            tag = attribute.getparent().text.strip()
-            tag = tag.strip(":")
-        except:
-            tag = "model"
-        try:
-            # # some of these tags are not 100% the same with the vehicle class, have to change them to match
-            if tag == "type":
-                tag = "car_type"
-            if " " in tag:
-                tag = tag.replace(" ", "_")
-            # this code fails if attribute=None so we have to handle it appropriately
-            raw_attributes[tag] = attribute.text.strip()
-        except:
-            raw_attributes[tag] = None
-            pass
-
-    for key, value in raw_attributes.items():
-        if (key not in Vehicle.__dict__):
-            print(f"could not attach key to class: {key}", flush=True)
-        else:
-            setattr(vehicle, key, value)
-
-    return vehicle
-
-def fix_manufacturer_errors(manufacturer):
-    if manufacturer:
-        # resolve conflicting manufacturer titles
-        manufacturer = manufacturer.lower()
-        if manufacturer == "chev" or manufacturer == "chevy":
-            return "chevrolet"
-        if manufacturer == "mercedes" or manufacturer == "mercedesbenz":
-            return "mercedes-benz"
-        if manufacturer == "vw":
-            return "volkswagen"
-        if manufacturer == "landrover":
-            return "land rover"
-        if manufacturer == "harley":
-            return "harley-davidson"
-        if manufacturer == "infinity":
-            return "infiniti"
-        if manufacturer == "alfa":
-            return "alfa-romeo"
-        if manufacturer == "aston":
-            return "aston-martin"
-    return manufacturer
 
 
 def scrapeVehicles(cities):
