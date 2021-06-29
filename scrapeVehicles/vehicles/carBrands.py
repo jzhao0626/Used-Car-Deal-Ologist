@@ -1,4 +1,6 @@
-carMake = [
+# carBrands dictate what qualifies as a brand so we can snatch that data from the 'model' tag
+
+carBrands = [
     "acura",
     "alfa",
     "alfa-romeo",

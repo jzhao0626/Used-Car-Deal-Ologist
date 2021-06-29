@@ -7,8 +7,243 @@ from json import loads
 from lxml import html
 from datetime import datetime
 from requests_html import HTMLSession
+from .carBrands import carBrands
 from .Vehicle import Vehicle
 
+# each search page contains 120 entries
+craigslist_page_limit = 120
+
+def scrape_city_pages(session, city):
+    scraped = 0
+    scraped_vehicles = []
+    scrapedInCity = 0
+
+    # scrapedIds is used to store each individual vehicle id from a city, therefore we can delete vehicle records from the database
+    # if their id is no longer in scrapedIds under the assumption that the entry has been removed from craigslist
+    scrapedIds = set([])
+
+    while(True):
+        searchUrl = f"{city.url}/d/cars-trucks/search/cta?s={scrapedInCity}"
+        scrapedInCity += craigslist_page_limit
+        # now we scrape
+        try:
+            page = session.get(searchUrl)
+        except Exception as e:
+            # catch any excpetion and continue the loop if we cannot access a site for whatever reason
+            print(f"Failed to reach {searchUrl}, entries have been dropped: {e}")
+            continue
+
+
+
+        tree = html.fromstring(page.content)
+
+        # the following line returns a list of urls for different vehicles
+        vehicles = tree.xpath('//a[@class="result-image gallery"]')
+        if len(vehicles) == 0:
+            # if we no longer have entries, continue to the next city
+            return scraped_vehicles
+
+        vehiclesList = []
+        for item in vehicles:
+            vehicleDetails = []
+            vehicleDetails.append(item.attrib["href"])
+            try:
+                # this code attempts to grab the price of the vehicle. some vehicles dont have prices (which throws an exception)
+                # and we dont want those which is why we toss them
+                vehicleDetails.append(item[0].text)
+            except:
+                continue
+            vehiclesList.append(vehicleDetails)
+
+        # loop through each vehicle
+        for item in vehiclesList:
+            url = item[0]
+            try:
+                idpk = int(url.split("/")[-1].strip(".html"))
+            except ValueError as e:
+                print("{} does not have a valid id: {}".format(url, e), flush=True)
+
+            # vehicle id is a primary key in this database so we cant have repeats. if a record with the same url is found, we continue
+            # the loop as the vehicle has already been stored
+            print(f"SELECT 1 FROM vehicles WHERE id = {idpk}")
+            if idpk in scrapedIds:
+                continue
+
+            # add the id to scrapedIds for database cleaning purposes
+            scrapedIds.add(idpk)
+
+            new_vehicle = Vehicle(idpk)
+            new_vehicle.price = int(item[1].replace(",", "").strip("$"))
+
+            vehicleDict = {}
+            vehicleDict["price"] = int(item[1].replace(",", "").strip("$"))
+
+            try:
+                # grab each individual vehicle page
+                page = session.get(url)
+                tree = html.fromstring(page.content)
+            except:
+                print(f"Failed to reach {url}, entry has been dropped")
+                continue
+
+
+            new_vehicle = apply_webpage_attributes(new_vehicle, tree.xpath("//span//b"))
+
+            # we will assume that each of these variables are None until we hear otherwise
+            # that way, try/except clauses can simply pass and leave these values as None
+            price = None
+            year = None
+            manufacturer = None
+            model = None
+            condition = None
+            cylinders = None
+            fuel = None
+            odometer = None
+            title_status = None
+            transmission = None
+            VIN = None
+            drive = None
+            size = None
+            vehicle_type = None
+            paint_color = None
+            image_url = None
+            lat = None
+            long = None
+            description = None
+            posting_date = None
+
+            # now this code gets redundant. if we picked up a specific attr in the vehicleDict then we can change the variable from None.
+            # integer attributes (price/odometer) are handled in case the int() is unsuccessful, but i have never seen that be the case
+            if "price" in vehicleDict:
+                try:
+                    price = int(vehicleDict["price"])
+                except Exception as e:
+                    print(f"Could not parse price: {e}")
+            if "odomoter" in vehicleDict:
+                try:
+                    odometer = int(vehicleDict["odometer"])
+                except Exception as e:
+                    print(f"Could not parse odometer: {e}")
+            if "condition" in vehicleDict:
+                condition = vehicleDict["condition"]
+            if "model" in vehicleDict:
+                # model actually contains 3 variables that we'd like: year, manufacturer, and model (which we call model)
+                try:
+                    year = int(vehicleDict["model"][:4])
+                    if year > nextYear:
+                        year = None
+                except:
+                    year = None
+                model = vehicleDict["model"][5:]
+                foundManufacturer = False
+                # we parse through each word in the description and search for a match with carBrands (at the top of the program)
+                # if a match is found then we have our manufacturer, otherwise we set model to the entire string and leave manu blank
+                for word in model.split():
+                    if word.lower() in carBrands:
+                        foundManufacturer = True
+                        model = ""
+                        # resolve conflicting manufacturer titles
+                        manufacturer = fix_manufacturer_errors(manufacturer)
+                        continue
+                    if foundManufacturer:
+                        model = model + word.lower() + " "
+                model = model.strip()
+            if "cylinders" in vehicleDict:
+                cylinders = vehicleDict["cylinders"]
+            if "fuel" in vehicleDict:
+                fuel = vehicleDict["fuel"]
+            if "odometer" in vehicleDict:
+                odometer = vehicleDict["odometer"]
+            if "title status" in vehicleDict:
+                title_status = vehicleDict["title status"]
+            if "transmission" in vehicleDict:
+                transmission = vehicleDict["transmission"]
+            if "VIN" in vehicleDict:
+                VIN = vehicleDict["VIN"]
+            if "drive" in vehicleDict:
+                drive = vehicleDict["drive"]
+            if "size" in vehicleDict:
+                size = vehicleDict["size"]
+            if "type" in vehicleDict:
+                vehicle_type = vehicleDict["type"]
+            if "paint color" in vehicleDict:
+                paint_color = vehicleDict["paint color"]
+
+            # now lets fetch the image url if exists
+
+            try:
+                img = tree.xpath('//div[@class="slide first visible"]//img')
+                image_url = img[0].attrib["src"]
+            except:
+                pass
+
+            # try to fetch lat/long and city/state, remain as None if they do not exist
+
+            try:
+                location = tree.xpath("//div[@id='map']")
+                lat = float(location[0].attrib["data-latitude"])
+                long = float(location[0].attrib["data-longitude"])
+            except Exception as e:
+                pass
+
+            # try to fetch a vehicle description, remain as None if it does not exist
+
+            try:
+                location = tree.xpath("//section[@id='postingbody']")
+                # description = location[0].text_content().replace("\n", " ").replace("QR Code Link to This Post", "").strip()
+                description = None
+            except:
+                pass
+            try:
+                posting_date = tree.xpath(
+                    "//div[@class='postinginfos']//p[@class='postinginfo reveal']//time"
+                )[0].get("datetime")
+            except Exception as e:
+                print(e)
+
+            scraped_vehicles.append(new_vehicle)
+
+            # finally we get to insert the entry into the database
+            print(
+                """INSERT INTO vehicles(id, url, region, region_url, price, year, manufacturer, model, condition,
+            cylinders, fuel,odometer, title_status, transmission, VIN, drive, size, type, 
+            paint_color, image_url, description, lat, long, state, posting_date)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    idpk,
+                    url,
+                    city.url,
+                    city.state,
+                    price,
+                    year,
+                    manufacturer,
+                    model,
+                    condition,
+                    cylinders,
+                    fuel,
+                    odometer,
+                    title_status,
+                    transmission,
+                    VIN,
+                    drive,
+                    size,
+                    vehicle_type,
+                    paint_color,
+                    image_url,
+                    description,
+                    lat,
+                    long,
+                    city.name,
+                    posting_date,
+                ),
+            )
+
+            scraped += 1
+            if scraped > 99:
+                return scraped_vehicles
+        
+        # these lines will execute every time we grab a new page (after 120 entries)
+        print(f"{scraped} vehicles scraped", flush=True)
 
 def apply_webpage_attributes(vehicle, attributes):
     # this fetches a list of attributes about a given vehicle. each vehicle does not have every specific attribute listed on craigslist
@@ -65,321 +300,250 @@ def fix_manufacturer_errors(manufacturer):
 
 
 def scrapeVehicles(cities):
-
     scraped_vehicles = []
-
-    print(
-        """CREATE TABLE IF NOT EXISTS vehicles(id BIGINT PRIMARY KEY, url TEXT, region TEXT, region_url TEXT, 
-    price BIGINT, year BIGINT, manufacturer TEXT, model TEXT, condition TEXT, cylinders TEXT, fuel TEXT, 
-    odometer BIGINT, title_status TEXT, transmission TEXT, VIN TEXT, drive TEXT, size TEXT, type TEXT, paint_color TEXT, image_url TEXT, 
-    description TEXT, state TEXT, lat REAL, long REAL, posting_date TEXT)""",
-        flush=True,
-    )
-
     session = HTMLSession()
-
-    # scraped counts all entries gathered
-    scraped = 0
-
-    # carBrands dictate what qualifies as a brand so we can snatch that data from the 'model' tag
-    carBrands = [
-        "ford",
-        "toyota",
-        "chevrolet",
-        "chev",
-        "chevy",
-        "honda",
-        "jeep",
-        "hyundai",
-        "subaru",
-        "kia",
-        "gmc",
-        "ram",
-        "dodge",
-        "mercedes-benz",
-        "mercedes",
-        "mercedesbenz",
-        "volkswagen",
-        "vw",
-        "bmw",
-        "saturn",
-        "land rover",
-        "landrover",
-        "pontiac",
-        "mitsubishi",
-        "lincoln",
-        "volvo",
-        "mercury",
-        "harley-davidson",
-        "harley",
-        "rover",
-        "buick",
-        "cadillac",
-        "infiniti",
-        "infinity",
-        "audi",
-        "mazda",
-        "chrysler",
-        "acura",
-        "lexus",
-        "nissan",
-        "datsun",
-        "jaguar",
-        "alfa",
-        "alfa-romeo",
-        "aston",
-        "aston-martin",
-        "ferrari",
-        "fiat",
-        "hennessey",
-        "porsche",
-        "noble",
-        "morgan",
-        "mini",
-        "tesla",
-    ]
 
     # if the car year is beyond next year, we toss it out. this variable is used later
     nextYear = datetime.now().year + 1
 
-    citiesCount = len(cities)
+    cities_count = len(cities)
+    for i in range(cities_count):
+        new_vehicles = scrape_city_pages(session, cities[i])
+        if (len(new_vehicles) > 0):
+            scraped_vehicles = scraped_vehicles + new_vehicles
+        # city = cities[i]
+        
+        # scrapedInCity = 0
 
-    for city in cities:
-        scrapedInCity = 0
-        empty = False
+        # # scrapedIds is used to store each individual vehicle id from a city, therefore we can delete vehicle records from the database
+        # # if their id is no longer in scrapedIds under the assumption that the entry has been removed from craigslist
+        # scrapedIds = set([])
 
-        # scrapedIds is used to store each individual vehicle id from a city, therefore we can delete vehicle records from the database
-        # if their id is no longer in scrapedIds under the assumption that the entry has been removed from craigslist
-        scrapedIds = set([])
+        # # this loop executes until we are out of search results, craigslist sets this limit at 3000 and cities often contain the full 3000 records (but not always)
+        # empty = False
+        # while not empty:
+        #     print(
+        #         f"Gathering entries {scrapedInCity} through {scrapedInCity + 120}",
+        #         flush=True,
+        #     )
 
-        # track items skipped that are already in the database
-        skipped = 0
+        #     # now we scrape
+        #     try:
+        #         searchUrl = f"{city.url}/d/cars-trucks/search/cta?s={scrapedInCity}"
+        #         page = session.get(searchUrl)
+        #     except Exception as e:
+        #         # catch any excpetion and continue the loop if we cannot access a site for whatever reason
+        #         print(f"Failed to reach {searchUrl}, entries have been dropped: {e}")
+        #         scrapedInCity += craigslist_page_limit
+        #         continue
 
-        # this loop executes until we are out of search results, craigslist sets this limit at 3000 and cities often contain the full 3000 records (but not always)
-        while not empty:
-            print(
-                f"Gathering entries {scrapedInCity} through {scrapedInCity + 120}",
-                flush=True,
-            )
+        #     # each search page contains 120 entries
+        #     scrapedInCity += craigslist_page_limit
+        #     tree = html.fromstring(page.content)
 
-            # now we scrape
-            try:
-                searchUrl = f"{city.url}/d/cars-trucks/search/cta?s={scrapedInCity}"
-                page = session.get(searchUrl)
-            except Exception as e:
-                # catch any excpetion and continue the loop if we cannot access a site for whatever reason
-                print(f"Failed to reach {searchUrl}, entries have been dropped: {e}")
-                scrapedInCity += 120
-                continue
+        #     # the following line returns a list of urls for different vehicles
+        #     vehicles = tree.xpath('//a[@class="result-image gallery"]')
+        #     if len(vehicles) == 0:
+        #         # if we no longer have entries, continue to the next city
+        #         empty = True
+        #         continue
+        #     vehiclesList = []
+        #     for item in vehicles:
+        #         vehicleDetails = []
+        #         vehicleDetails.append(item.attrib["href"])
+        #         try:
+        #             # this code attempts to grab the price of the vehicle. some vehicles dont have prices (which throws an exception)
+        #             # and we dont want those which is why we toss them
+        #             vehicleDetails.append(item[0].text)
+        #         except:
+        #             continue
+        #         vehiclesList.append(vehicleDetails)
 
-            # each search page contains 120 entries
-            scrapedInCity += 120
-            tree = html.fromstring(page.content)
+        #     # loop through each vehicle
+        #     for item in vehiclesList:
+        #         url = item[0]
+        #         try:
+        #             idpk = int(url.split("/")[-1].strip(".html"))
+        #         except ValueError as e:
+        #             print("{} does not have a valid id: {}".format(url, e), flush=True)
 
-            # the following line returns a list of urls for different vehicles
-            vehicles = tree.xpath('//a[@class="result-image gallery"]')
-            if len(vehicles) == 0:
-                # if we no longer have entries, continue to the next city
-                empty = True
-                continue
-            vehiclesList = []
-            for item in vehicles:
-                vehicleDetails = []
-                vehicleDetails.append(item.attrib["href"])
-                try:
-                    # this code attempts to grab the price of the vehicle. some vehicles dont have prices (which throws an exception)
-                    # and we dont want those which is why we toss them
-                    vehicleDetails.append(item[0].text)
-                except:
-                    continue
-                vehiclesList.append(vehicleDetails)
+        #         # vehicle id is a primary key in this database so we cant have repeats. if a record with the same url is found, we continue
+        #         # the loop as the vehicle has already been stored
+        #         print(f"SELECT 1 FROM vehicles WHERE id = {idpk}")
+        #         if idpk in scrapedIds:
+        #             continue
 
-            # loop through each vehicle
-            for item in vehiclesList:
-                url = item[0]
-                try:
-                    idpk = int(url.split("/")[-1].strip(".html"))
-                except ValueError as e:
-                    print("{} does not have a valid id: {}".format(url, e), flush=True)
+        #         # add the id to scrapedIds for database cleaning purposes
+        #         scrapedIds.add(idpk)
 
-                # vehicle id is a primary key in this database so we cant have repeats. if a record with the same url is found, we continue
-                # the loop as the vehicle has already been stored
-                print(f"SELECT 1 FROM vehicles WHERE id = {idpk}")
-                if idpk in scrapedIds:
-                    skipped += 1
-                    continue
+        #         new_vehicle = Vehicle(idpk)
+        #         new_vehicle.price = int(item[1].replace(",", "").strip("$"))
 
-                # add the id to scrapedIds for database cleaning purposes
-                scrapedIds.add(idpk)
+        #         vehicleDict = {}
+        #         vehicleDict["price"] = int(item[1].replace(",", "").strip("$"))
 
-                new_vehicle = Vehicle(idpk)
-                new_vehicle.price = int(item[1].replace(",", "").strip("$"))
-
-                vehicleDict = {}
-                vehicleDict["price"] = int(item[1].replace(",", "").strip("$"))
-
-                try:
-                    # grab each individual vehicle page
-                    page = session.get(url)
-                    tree = html.fromstring(page.content)
-                except:
-                    print(f"Failed to reach {url}, entry has been dropped")
-                    continue
+        #         try:
+        #             # grab each individual vehicle page
+        #             page = session.get(url)
+        #             tree = html.fromstring(page.content)
+        #         except:
+        #             print(f"Failed to reach {url}, entry has been dropped")
+        #             continue
 
 
-                new_vehicle = apply_webpage_attributes(new_vehicle, tree.xpath("//span//b"))
+        #         new_vehicle = apply_webpage_attributes(new_vehicle, tree.xpath("//span//b"))
 
-                # we will assume that each of these variables are None until we hear otherwise
-                # that way, try/except clauses can simply pass and leave these values as None
-                price = None
-                year = None
-                manufacturer = None
-                model = None
-                condition = None
-                cylinders = None
-                fuel = None
-                odometer = None
-                title_status = None
-                transmission = None
-                VIN = None
-                drive = None
-                size = None
-                vehicle_type = None
-                paint_color = None
-                image_url = None
-                lat = None
-                long = None
-                description = None
-                posting_date = None
+        #         # we will assume that each of these variables are None until we hear otherwise
+        #         # that way, try/except clauses can simply pass and leave these values as None
+        #         price = None
+        #         year = None
+        #         manufacturer = None
+        #         model = None
+        #         condition = None
+        #         cylinders = None
+        #         fuel = None
+        #         odometer = None
+        #         title_status = None
+        #         transmission = None
+        #         VIN = None
+        #         drive = None
+        #         size = None
+        #         vehicle_type = None
+        #         paint_color = None
+        #         image_url = None
+        #         lat = None
+        #         long = None
+        #         description = None
+        #         posting_date = None
 
-                # now this code gets redundant. if we picked up a specific attr in the vehicleDict then we can change the variable from None.
-                # integer attributes (price/odometer) are handled in case the int() is unsuccessful, but i have never seen that be the case
-                if "price" in vehicleDict:
-                    try:
-                        price = int(vehicleDict["price"])
-                    except Exception as e:
-                        print(f"Could not parse price: {e}")
-                if "odomoter" in vehicleDict:
-                    try:
-                        odometer = int(vehicleDict["odometer"])
-                    except Exception as e:
-                        print(f"Could not parse odometer: {e}")
-                if "condition" in vehicleDict:
-                    condition = vehicleDict["condition"]
-                if "model" in vehicleDict:
-                    # model actually contains 3 variables that we'd like: year, manufacturer, and model (which we call model)
-                    try:
-                        year = int(vehicleDict["model"][:4])
-                        if year > nextYear:
-                            year = None
-                    except:
-                        year = None
-                    model = vehicleDict["model"][5:]
-                    foundManufacturer = False
-                    # we parse through each word in the description and search for a match with carBrands (at the top of the program)
-                    # if a match is found then we have our manufacturer, otherwise we set model to the entire string and leave manu blank
-                    for word in model.split():
-                        if word.lower() in carBrands:
-                            foundManufacturer = True
-                            model = ""
-                            # resolve conflicting manufacturer titles
-                            manufacturer = fix_manufacturer_errors(manufacturer)
-                            continue
-                        if foundManufacturer:
-                            model = model + word.lower() + " "
-                    model = model.strip()
-                if "cylinders" in vehicleDict:
-                    cylinders = vehicleDict["cylinders"]
-                if "fuel" in vehicleDict:
-                    fuel = vehicleDict["fuel"]
-                if "odometer" in vehicleDict:
-                    odometer = vehicleDict["odometer"]
-                if "title status" in vehicleDict:
-                    title_status = vehicleDict["title status"]
-                if "transmission" in vehicleDict:
-                    transmission = vehicleDict["transmission"]
-                if "VIN" in vehicleDict:
-                    VIN = vehicleDict["VIN"]
-                if "drive" in vehicleDict:
-                    drive = vehicleDict["drive"]
-                if "size" in vehicleDict:
-                    size = vehicleDict["size"]
-                if "type" in vehicleDict:
-                    vehicle_type = vehicleDict["type"]
-                if "paint color" in vehicleDict:
-                    paint_color = vehicleDict["paint color"]
+        #         # now this code gets redundant. if we picked up a specific attr in the vehicleDict then we can change the variable from None.
+        #         # integer attributes (price/odometer) are handled in case the int() is unsuccessful, but i have never seen that be the case
+        #         if "price" in vehicleDict:
+        #             try:
+        #                 price = int(vehicleDict["price"])
+        #             except Exception as e:
+        #                 print(f"Could not parse price: {e}")
+        #         if "odomoter" in vehicleDict:
+        #             try:
+        #                 odometer = int(vehicleDict["odometer"])
+        #             except Exception as e:
+        #                 print(f"Could not parse odometer: {e}")
+        #         if "condition" in vehicleDict:
+        #             condition = vehicleDict["condition"]
+        #         if "model" in vehicleDict:
+        #             # model actually contains 3 variables that we'd like: year, manufacturer, and model (which we call model)
+        #             try:
+        #                 year = int(vehicleDict["model"][:4])
+        #                 if year > nextYear:
+        #                     year = None
+        #             except:
+        #                 year = None
+        #             model = vehicleDict["model"][5:]
+        #             foundManufacturer = False
+        #             # we parse through each word in the description and search for a match with carBrands (at the top of the program)
+        #             # if a match is found then we have our manufacturer, otherwise we set model to the entire string and leave manu blank
+        #             for word in model.split():
+        #                 if word.lower() in carBrands:
+        #                     foundManufacturer = True
+        #                     model = ""
+        #                     # resolve conflicting manufacturer titles
+        #                     manufacturer = fix_manufacturer_errors(manufacturer)
+        #                     continue
+        #                 if foundManufacturer:
+        #                     model = model + word.lower() + " "
+        #             model = model.strip()
+        #         if "cylinders" in vehicleDict:
+        #             cylinders = vehicleDict["cylinders"]
+        #         if "fuel" in vehicleDict:
+        #             fuel = vehicleDict["fuel"]
+        #         if "odometer" in vehicleDict:
+        #             odometer = vehicleDict["odometer"]
+        #         if "title status" in vehicleDict:
+        #             title_status = vehicleDict["title status"]
+        #         if "transmission" in vehicleDict:
+        #             transmission = vehicleDict["transmission"]
+        #         if "VIN" in vehicleDict:
+        #             VIN = vehicleDict["VIN"]
+        #         if "drive" in vehicleDict:
+        #             drive = vehicleDict["drive"]
+        #         if "size" in vehicleDict:
+        #             size = vehicleDict["size"]
+        #         if "type" in vehicleDict:
+        #             vehicle_type = vehicleDict["type"]
+        #         if "paint color" in vehicleDict:
+        #             paint_color = vehicleDict["paint color"]
 
-                # now lets fetch the image url if exists
+        #         # now lets fetch the image url if exists
 
-                try:
-                    img = tree.xpath('//div[@class="slide first visible"]//img')
-                    image_url = img[0].attrib["src"]
-                except:
-                    pass
+        #         try:
+        #             img = tree.xpath('//div[@class="slide first visible"]//img')
+        #             image_url = img[0].attrib["src"]
+        #         except:
+        #             pass
 
-                # try to fetch lat/long and city/state, remain as None if they do not exist
+        #         # try to fetch lat/long and city/state, remain as None if they do not exist
 
-                try:
-                    location = tree.xpath("//div[@id='map']")
-                    lat = float(location[0].attrib["data-latitude"])
-                    long = float(location[0].attrib["data-longitude"])
-                except Exception as e:
-                    pass
+        #         try:
+        #             location = tree.xpath("//div[@id='map']")
+        #             lat = float(location[0].attrib["data-latitude"])
+        #             long = float(location[0].attrib["data-longitude"])
+        #         except Exception as e:
+        #             pass
 
-                # try to fetch a vehicle description, remain as None if it does not exist
+        #         # try to fetch a vehicle description, remain as None if it does not exist
 
-                try:
-                    location = tree.xpath("//section[@id='postingbody']")
-                    # description = location[0].text_content().replace("\n", " ").replace("QR Code Link to This Post", "").strip()
-                    description = None
-                except:
-                    pass
-                try:
-                    posting_date = tree.xpath(
-                        "//div[@class='postinginfos']//p[@class='postinginfo reveal']//time"
-                    )[0].get("datetime")
-                except Exception as e:
-                    print(e)
+        #         try:
+        #             location = tree.xpath("//section[@id='postingbody']")
+        #             # description = location[0].text_content().replace("\n", " ").replace("QR Code Link to This Post", "").strip()
+        #             description = None
+        #         except:
+        #             pass
+        #         try:
+        #             posting_date = tree.xpath(
+        #                 "//div[@class='postinginfos']//p[@class='postinginfo reveal']//time"
+        #             )[0].get("datetime")
+        #         except Exception as e:
+        #             print(e)
 
-                scraped_vehicles.append(new_vehicle)
+        #         scraped_vehicles.append(new_vehicle)
 
-                # finally we get to insert the entry into the database
-                print(
-                    """INSERT INTO vehicles(id, url, region, region_url, price, year, manufacturer, model, condition,
-                cylinders, fuel,odometer, title_status, transmission, VIN, drive, size, type, 
-                paint_color, image_url, description, lat, long, state, posting_date)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (
-                        idpk,
-                        url,
-                        city.url,
-                        city.state,
-                        price,
-                        year,
-                        manufacturer,
-                        model,
-                        condition,
-                        cylinders,
-                        fuel,
-                        odometer,
-                        title_status,
-                        transmission,
-                        VIN,
-                        drive,
-                        size,
-                        vehicle_type,
-                        paint_color,
-                        image_url,
-                        description,
-                        lat,
-                        long,
-                        city.name,
-                        posting_date,
-                    ),
-                )
+        #         # finally we get to insert the entry into the database
+        #         print(
+        #             """INSERT INTO vehicles(id, url, region, region_url, price, year, manufacturer, model, condition,
+        #         cylinders, fuel,odometer, title_status, transmission, VIN, drive, size, type, 
+        #         paint_color, image_url, description, lat, long, state, posting_date)
+        #         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        #             (
+        #                 idpk,
+        #                 url,
+        #                 city.url,
+        #                 city.state,
+        #                 price,
+        #                 year,
+        #                 manufacturer,
+        #                 model,
+        #                 condition,
+        #                 cylinders,
+        #                 fuel,
+        #                 odometer,
+        #                 title_status,
+        #                 transmission,
+        #                 VIN,
+        #                 drive,
+        #                 size,
+        #                 vehicle_type,
+        #                 paint_color,
+        #                 image_url,
+        #                 description,
+        #                 lat,
+        #                 long,
+        #                 city.name,
+        #                 posting_date,
+        #             ),
+        #         )
 
-                scraped += 1
-                if scraped > 99:
-                    return scraped_vehicles
-            # these lines will execute every time we grab a new page (after 120 entries)
-            print(f"{scraped} vehicles scraped", flush=True)
+        #         scraped += 1
+        #         if scraped > 99:
+        #             return scraped_vehicles
+        #     # these lines will execute every time we grab a new page (after 120 entries)
+        #     print(f"{scraped} vehicles scraped", flush=True)
