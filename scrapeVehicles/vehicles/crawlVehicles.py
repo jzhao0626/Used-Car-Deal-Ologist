@@ -56,7 +56,7 @@ def fix_manufacturer_errors(manufacturer):
 
 def scrapeVehicles(cities):
 
-    scrapedData = []
+    scraped_vehicles = []
 
     print(
         """CREATE TABLE IF NOT EXISTS vehicles(id BIGINT PRIMARY KEY, url TEXT, region TEXT, region_url TEXT, 
@@ -350,7 +350,7 @@ def scrapeVehicles(cities):
                 except Exception as e:
                     print(e)
 
-                scrapedData.append(idpk)
+                scraped_vehicles.append(new_vehicle)
 
                 # finally we get to insert the entry into the database
                 print(
@@ -387,8 +387,7 @@ def scrapeVehicles(cities):
                     ),
                 )
 
-                scraped += 1
-                if scraped > 99:
-                    return scrapedData
+                if len(scraped_vehicles) > 99:
+                    return scraped_vehicles
             # these lines will execute every time we grab a new page (after 120 entries)
-            print(f"{scraped} vehicles scraped", flush=True)
+            print(f"{len(scraped_vehicles)} vehicles scraped", flush=True)
