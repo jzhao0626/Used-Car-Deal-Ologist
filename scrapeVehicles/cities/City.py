@@ -11,4 +11,4 @@ class City:
         self.url = url
 
     def __str__(self):
-        return f"{self.name}, {self.state}: {self.state}"
+        return f"{self.name}, {self.state}: {self.url}"

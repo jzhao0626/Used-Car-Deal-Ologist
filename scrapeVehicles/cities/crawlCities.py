@@ -46,4 +46,5 @@ def scrapeCities(session):
         if (len(new_cities) > 0):
             cities = cities + new_cities
 
+    print(f"found {len(cities)} cities", flush=True)
     return cities
