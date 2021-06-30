@@ -6,6 +6,7 @@ from sklearn.svm import SVR
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import GridSearchCV
 import joblib
 
 
