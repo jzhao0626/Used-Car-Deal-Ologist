@@ -5,6 +5,7 @@
 All the members of the team contributed equally in every section of the project.
 
 Check out our live website at https://used-car-deal-ologist-2021.herokuapp.com/
+![Live Website Screenshot](images/Main_page_web.png)
 
 # Instructions
 
@@ -27,7 +28,7 @@ https://public.tableau.com/app/profile/franklyn1409/viz/Used-Car-2/UsedCarAnalys
 ![Type_Dist](images/Type_Dist.png)
 ![Price_V_Features](images/Price_V_Features.png)
 ![Mileage_V_Price](images/Mileage_V_Price.png)
-![State_Price](images/State_Price.png)
+![State_Price](images/State_Price.PNG)
 
 ## Extract:
 
@@ -61,12 +62,6 @@ The Main page shows the fields to input car data for checking against the traine
 
 ![Webpage Input Car](pre-planning/webpage_input_car.png)
 ![Webpage Show Car](pre-planning/webpage_show_car.png)
-
-# Flask Structure and Final Product Developed
-
-Dashboard showing all the input fields with the result data on the top the the screen.
-
-![MainPage](images/Main_page_web.png)
 
 ## References
 
