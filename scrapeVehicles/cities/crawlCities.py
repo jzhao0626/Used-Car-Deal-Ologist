@@ -4,6 +4,8 @@ import re
 from lxml import html
 from .stateCodes import states
 from .City import City
+from requests_html import AsyncHTMLSession
+import asyncio
 
 scrape_url_prefix = "https://geo.craigslist.org/iso/us/"
 
@@ -37,14 +39,21 @@ def scrapeState(state, origin, tree):
 
     return scrapedCities
 
-def scrapeCities(session):
-    cities = []
-    for state in states:
-        origin = session.get(scrape_url_prefix + state)
-        tree = (html.fromstring(origin.content))       
-        new_cities = scrapeState(state, origin, tree)
-        if (len(new_cities) > 0):
-            cities = cities + new_cities
+async def scrapeStateForCitiesAsync(session, base_url, state):
+    origin = await session.get(base_url  + state)
+    tree = (html.fromstring(origin.content))       
+    new_cities = scrapeState(state, origin, tree)
+    new_cities_count = len(new_cities) if new_cities is not None else 0
+    if (new_cities_count > 0):
+        return new_cities
+    else: return []
 
-    print(f"found {len(cities)} cities", flush=True)
+async def scrapeCitiesAsync():
+    cities = []
+    session = AsyncHTMLSession()
+    tasks = (scrapeStateForCitiesAsync(session, scrape_url_prefix, state) for state in states)
+    citiesLists = await asyncio.gather(*tasks)
+    for citiesList in citiesLists:
+        if (len(citiesList) > 0):
+            cities = cities + citiesList
     return cities
